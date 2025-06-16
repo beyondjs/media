@@ -1,0 +1,25 @@
+
+# Ignore node_modules at the root
+/node_modules
+
+# Ignore node_modules directly inside 'app', 'api', and 'sdk'
+/app/node_modules/
+/api/node_modules/
+/sdk/node_modules/
+/reactive/node_modules/
+/apps/rvd/node_modules/
+/apps/better-mind/node_modules/
+
+# Do not ignore node_modules inside 'modules' in 'app', 'api', and 'sdk'
+!/app/modules/node_modules
+!/api/modules/node_modules
+!/sdk/modules/node_modules
+!/reactive/modules/node_modules
+
+.beyond
+.vscode
+.idea
+.env
+credentials
+uploads
+trash/mine

@@ -1,0 +1,50 @@
+name: Build and Run Docker Container
+
+on:
+    push:
+        branches:
+            - development/web-deploy
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        env:
+            NETLIFY_OAUTH_TOKEN: ${{ secrets.NETLIFY_OAUTH_TOKEN }}
+            NETLIFY_SITE_ID: ${{ secrets.DEVELOPMENT_NETLIFY_SITE_ID }}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Clonar el repositorio aimpact-chat
+              run: |
+                  git clone -b dev https://TOKEN:${{ secrets.TOKEN }}@github.com/aimpact-partners/aimpact-chat ./chat-app
+              env:
+                  TOKEN: ${{ secrets.TOKEN }}
+
+            - name: Clonar el repositorio auth-client
+              run: |
+                  git clone -b dev https://TOKEN:${{ secrets.TOKEN }}@github.com/aimpact-partners/auth-client ./chat-auth
+              env:
+                  TOKEN: ${{ secrets.TOKEN }}
+
+            - name: Clonar el repositorio pragmate-ui
+              run: git clone -b dev https://github.com/balearesg/pragmate-ui ./pragmate-ui
+
+            - name: Clonar el repositorio media-manager
+              run: git clone -b dev https://github.com/jircdev/media-manager ./media-manager
+
+            - name: Clonar el repositorio reactive-model
+              run: git clone -b dev https://github.com/jircdev/reactive-model ./reactive-model
+
+            - name: Clonar el repositorio chat-sdk
+              run: git clone -b dev https://github.com/aimpact-partners/chat-sdk ./chat-sdk
+
+            - name: Build Docker image
+              run: docker build -t deploy_app -f app/.deploy/development/Dockerfile .
+
+            - name: Run Docker container
+              run:
+                  docker run -e NETLIFY_OAUTH_TOKEN=${{ secrets.NETLIFY_OAUTH_TOKEN }} -e NETLIFY_SITE_ID=${{
+                  secrets.DEVELOPMENT_NETLIFY_SITE_ID }} deploy_app
