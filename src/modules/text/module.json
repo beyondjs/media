@@ -1,0 +1,9 @@
+{
+	"subpath": "text",
+	"description": "Core utilities for media package",
+	"platforms": "*",
+	"ts": {
+		"path": ".",
+		"files": ["*"]
+	}
+}

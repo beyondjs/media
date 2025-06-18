@@ -77,43 +77,21 @@ import { promises as fs } from 'fs';
 import { IFileAdapter } from '../../types/adapter-interfaces';
 import { IFile, IReadOptions, IWriteOptions, IStreamOptions } from '../../types/file-interfaces';
 import { FileError } from '../../errors';
-import * as path from 'path';
 
 export /*bundle*/ class FsAdapter implements IFileAdapter {
-	public environment: string = 'node';
+    public environment: string = 'node';
 	supports(): boolean {
 		return typeof process !== 'undefined' && !!process.versions?.node;
 	}
-
-	private sanitizePath(inputPath: string): string {
-		// Reemplaza todas las barras inversas por barras normales (por si vienen de Windows)
-		const cleaned = inputPath.replace(/\\/g, '/');
-
-		// Usa path.normalize para convertir a formato del SO actual
-		return path.normalize(cleaned);
-	}
-
 	async read(file: IFile, opts: IReadOptions = {}): Promise<Uint8Array> {
-    const { offset = 0, length } = opts;
-    const filePath = this.sanitizePath(file.meta.name);
-
-    // Si no se pasa length, obtener el tamaño real del archivo
-    let size = length;
-    if (!size) {
-        const stat = await fs.stat(filePath);
-        size = stat.size;
-        // Opcional: actualizar el meta.size para futuras lecturas
-        file.meta.size = size;
-    }
-
-    const handle = await fs.open(filePath, 'r');
-    const buffer = Buffer.alloc(size);
-    const { bytesRead } = await handle.read(buffer, 0, size, offset);
-    await handle.close();
-
-    // Retornar solo los bytes realmente leídos
-    return new Uint8Array(buffer.subarray(0, bytesRead));
-}
+		const { offset = 0, length } = opts;
+		const handle = await fs.open(file.meta.name, 'r');
+		const size = length ?? file.meta.size;
+		const buffer = Buffer.alloc(size);
+		await handle.read(buffer, 0, size, offset);
+		await handle.close();
+		return new Uint8Array(buffer);
+	}
 	async write(file: IFile, data: Uint8Array, opts: IWriteOptions = {}): Promise<void> {
 		const { offset = 0 } = opts;
 		try {
@@ -199,7 +177,6 @@ export /*bundle*/ class File extends FileBase implements IFile {
 
 	async read(opts?: IReadOptions): Promise<Uint8Array> {
 		const bytes = await this.adapter.read(this, opts);
-
 		this.trigger('read.completed', bytes);
 		return bytes;
 	}
@@ -293,6 +270,258 @@ export /*bundle*/ interface IParser<T> {
   parse(file: IFile): Promise<T>;
 }
 
+/**
+ * File: node_modules\@beyond-js\media\base.d.ts
+ */
+/************
+Processor: ts
+************/
+
+import * as __beyond_dep_ns_0 from '@beyond-js/reactive/model';
+// index.ts
+declare namespace ns_0 {
+  import ReactiveModel = __beyond_dep_ns_0.ReactiveModel;
+  /**
+   * File metadata information
+   */
+  export interface IFileMeta {
+    name: string;
+    size: number;
+    type: string;
+    last_modified: number;
+  }
+  /**
+   * Minimal reactive representation of a file, agnostic of I/O.
+   * Provides metadata + change-events only.
+   */
+  export class FileBase extends ReactiveModel<FileBase> {
+    meta: IFileMeta;
+    constructor(meta: IFileMeta);
+    /** Update local metadata and notify listeners */
+    updateMeta(meta: Partial<IFileMeta>): void;
+  }
+}
+
+
+export import IFileMeta = ns_0.IFileMeta;
+export import FileBase = ns_0.FileBase;
+
+export declare const hmr: {on: (event: string, listener: any) => void, off: (event: string, listener: any) => void };
+/**
+ * File: node_modules\@beyond-js\media\fs.d.ts
+ */
+/************
+Processor: ts
+************/
+
+import * as __beyond_dep_ns_0 from '@beyond-js/media/base';
+// adapters\node\fs-adapter.ts
+declare namespace ns_0 {
+  import IFileAdapter = ns_3.IFileAdapter;
+  import IFile = ns_4.IFile;
+  import IReadOptions = ns_4.IReadOptions;
+  import IWriteOptions = ns_4.IWriteOptions;
+  import IStreamOptions = ns_4.IStreamOptions;
+  export class FsAdapter implements IFileAdapter {
+    environment: string;
+    supports(): boolean;
+    read(file: IFile, opts?: IReadOptions): Promise<Uint8Array>;
+    write(file: IFile, data: Uint8Array, opts?: IWriteOptions): Promise<void>;
+    stream(file: IFile, opts?: IStreamOptions): AsyncIterable<Uint8Array>;
+    close(): Promise<void>;
+  }
+}
+
+
+// errors.ts
+declare namespace ns_1 {
+  /**
+   * Custom error for file operations
+   */
+  export class FileError extends Error {
+    constructor(message: string);
+  }
+}
+
+
+// file.ts
+declare namespace ns_2 {
+  /**
+   * Core File implementation
+   */
+  import IFile = ns_4.IFile;
+  import IReadOptions = ns_4.IReadOptions;
+  import IWriteOptions = ns_4.IWriteOptions;
+  import IStreamOptions = ns_4.IStreamOptions;
+  import IFileMeta = __beyond_dep_ns_0.IFileMeta;
+  import FileBase = __beyond_dep_ns_0.FileBase;
+  import IFileAdapter = ns_3.IFileAdapter;
+  export class File extends FileBase implements IFile {
+    meta: IFileMeta;
+    private static adapters;
+    private adapter;
+    /**
+     * @param meta Metadata del archivo
+     * @param environment Entorno a usar (por defecto: 'node')
+     */
+    constructor(meta: IFileMeta, environment?: string);
+    static registerAdapter(a: IFileAdapter): void;
+    read(opts?: IReadOptions): Promise<Uint8Array>;
+    write(d: Uint8Array, opts?: IWriteOptions): Promise<void>;
+    stream(opts?: IStreamOptions): AsyncIterable<Uint8Array>;
+    close(): Promise<void>;
+    updateMetaSize(size: number): void;
+  }
+}
+
+
+// types\adapter-interfaces.ts
+declare namespace ns_3 {
+  import IFile = ns_4.IFile;
+  import IReadOptions = ns_4.IReadOptions;
+  import IWriteOptions = ns_4.IWriteOptions;
+  import IStreamOptions = ns_4.IStreamOptions;
+  /**
+   * File adapter interface abstraction
+   */
+  export interface IFileAdapter {
+    /**
+     * Nombre del entorno soportado por el adapter (por ejemplo: 'node', 'browser', etc)
+     */
+    environment: string;
+    supports(file: IFile): boolean;
+    read(file: IFile, opts?: IReadOptions): Promise<Uint8Array>;
+    write(file: IFile, data: Uint8Array, opts?: IWriteOptions): Promise<void>;
+    stream(file: IFile, opts?: IStreamOptions): AsyncIterable<Uint8Array>;
+    close(file: IFile): Promise<void>;
+  }
+}
+
+
+// types\file-interfaces.ts
+declare namespace ns_4 {
+  import IFileMeta = __beyond_dep_ns_0.IFileMeta;
+  /**
+   * Options for reading a file
+   *
+   */
+  export interface IReadOptions {
+    offset?: number;
+    length?: number;
+  }
+  /**
+   * Options for writing to a file
+   */
+  export interface IWriteOptions {
+    offset?: number;
+  }
+  /**
+   * Options for streaming a file
+   */
+  export interface IStreamOptions {
+    chunk_size?: number;
+  }
+  /**
+   * File interface abstraction
+   */
+  export interface IFile {
+    meta: IFileMeta;
+    read(opts?: IReadOptions): Promise<Uint8Array>;
+    write(data: Uint8Array, opts?: IWriteOptions): Promise<void>;
+    stream(opts?: IStreamOptions): AsyncIterable<Uint8Array>;
+    close(): Promise<void>;
+  }
+}
+
+
+// types\parser-interfaces.ts
+declare namespace ns_5 {
+  /**
+   * Parser interface for generic file parsing
+   */
+  import IFile = ns_4.IFile;
+  /**
+   * Parser interface for generic file parsing
+   */
+  export interface IParser<T> {
+    canHandle(file: IFile): boolean;
+    parse(file: IFile): Promise<T>;
+  }
+}
+
+
+export import FsAdapter = ns_0.FsAdapter;
+export import FileError = ns_1.FileError;
+export import File = ns_2.File;
+export import IFileAdapter = ns_3.IFileAdapter;
+export import IReadOptions = ns_4.IReadOptions;
+export import IWriteOptions = ns_4.IWriteOptions;
+export import IStreamOptions = ns_4.IStreamOptions;
+export import IFile = ns_4.IFile;
+export import IParser = ns_5.IParser;
+
+export declare const hmr: {on: (event: string, listener: any) => void, off: (event: string, listener: any) => void };
+/**
+ * File: node_modules\@beyond-js\media\text.d.ts
+ */
+/************
+Processor: ts
+************/
+
+import * as __beyond_dep_ns_0 from '@beyond-js/media/fs';
+// json-file.ts
+declare namespace ns_0 {
+  import File = __beyond_dep_ns_0.File;
+  export class JsonFile extends File {
+    #private;
+    get data(): unknown;
+    set data(v: unknown);
+    load(): Promise<void>;
+  }
+}
+
+
+// parsers\json-parser.ts
+declare namespace ns_1 {
+  /**
+   * Parser for JSON files
+   */
+  import IParser = __beyond_dep_ns_0.IParser;
+  import IFile = __beyond_dep_ns_0.IFile;
+  export class JsonParser implements IParser<unknown> {
+    canHandle(file: IFile): boolean;
+    parse(file: IFile): Promise<unknown>;
+  }
+}
+
+
+// text-file.ts
+declare namespace ns_2 {
+  import File = __beyond_dep_ns_0.File;
+  import IReadOptions = __beyond_dep_ns_0.IReadOptions;
+  import IWriteOptions = __beyond_dep_ns_0.IWriteOptions;
+  /** Text-oriented wrapper around the generic File */
+  export class TextFile extends File {
+    readText(opts?: IReadOptions): Promise<string>;
+    writeText(content: string, opts?: IWriteOptions): Promise<void>;
+  }
+}
+
+
+// utils\text-codec.ts
+declare namespace ns_3 {
+  export const encode: (s: string) => Uint8Array;
+  export const decode: (b: Uint8Array) => string;
+}
+
+
+export import JsonFile = ns_0.JsonFile;
+export import JsonParser = ns_1.JsonParser;
+export import TextFile = ns_2.TextFile;
+export import encode = ns_3.encode;
+export import decode = ns_3.decode;
+
+export declare const hmr: {on: (event: string, listener: any) => void, off: (event: string, listener: any) => void };
 /**
  * File: text\json-file.ts
  */

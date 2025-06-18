@@ -1,0 +1,9 @@
+{
+  "name": "routes",
+  "platforms": "node",
+  "ts": {
+    "files": [
+      "*"
+    ]
+  }
+}
