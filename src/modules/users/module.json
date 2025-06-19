@@ -1,0 +1,20 @@
+{
+  "name": "users",
+  "platforms": ["*"],
+  "widget": {
+    "is": "page",
+    "route": "/users",
+    "layout": "main-layout",
+    "scss": {
+      "path": "scss",
+      "files": ["styles.scss"]
+    },
+    "ts": {
+      "path": "ts",
+      "files": ["*"]
+    },
+    "element": {
+      "name": "app-users-view"
+    }
+  }
+}

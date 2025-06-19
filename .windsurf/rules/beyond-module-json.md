@@ -1,5 +1,5 @@
 ---
-trigger: model_decision
+trigger: manual
 description: When is required to create a module in a beyond project.
 ---
 
